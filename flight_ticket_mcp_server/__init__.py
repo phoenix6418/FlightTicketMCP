@@ -39,8 +39,8 @@ def main():
     parser.add_argument(
         "--mode",
         dest="flight_mode",
-        default=None,
-        help="Flight search browser mode: headless | headed (aliases: gui, visible, nonheadless). Default: headed."
+        default="headless",
+        help="Flight search browser mode: headless | headed (aliases: gui, visible, nonheadless). Default: headless."
     )
     args, _ = parser.parse_known_args()
 

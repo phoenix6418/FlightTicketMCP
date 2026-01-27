@@ -50,7 +50,7 @@ except ImportError:
 class FlightRouteSearcher:
     """航班路线查询器"""
     
-    def __init__(self, headless=False):
+    def __init__(self, headless=True):
         """
         初始化浏览器
         
@@ -905,7 +905,7 @@ def searchFlightRoutes(departure_city: str, destination_city: str, departure_dat
         
         # 创建搜索器并搜索
         headless_env = os.getenv("FLIGHT_SEARCH_HEADLESS")
-        headless = False
+        headless = True
         if headless_env is not None:
             headless = headless_env.strip().lower() in ("1", "true", "yes", "y")
 
