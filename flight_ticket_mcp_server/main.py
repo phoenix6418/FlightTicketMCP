@@ -238,17 +238,17 @@ def register_tools():
         return flight_transfer_tools.getTransferFlightsByThreePlace(from_place, transfer_place, to_place, min_transfer_time, max_transfer_time)
 
     # Weather query tools
-    @mcp.tool()
-    def getWeatherByLocation(latitude: float, longitude: float, start_date: str = None, end_date: str = None):
-        """天气信息查询 - 根据经纬度查询天气信息，使用Open-Meteo API。如果不提供日期，默认查询今天和明天的天气数据"""
-        logger.debug(f"调用天气查询工具: latitude={latitude}, longitude={longitude}, start_date={start_date}, end_date={end_date}")
-        return weather_tools.getWeatherByLocation(latitude, longitude, start_date, end_date)
+    # @mcp.tool()
+    # def getWeatherByLocation(latitude: float, longitude: float, start_date: str = None, end_date: str = None):
+    #     """天气信息查询 - 根据经纬度查询天气信息，使用Open-Meteo API。如果不提供日期，默认查询今天和明天的天气数据"""
+    #     logger.debug(f"调用天气查询工具: latitude={latitude}, longitude={longitude}, start_date={start_date}, end_date={end_date}")
+    #     return weather_tools.getWeatherByLocation(latitude, longitude, start_date, end_date)
 
-    @mcp.tool()
-    def getWeatherByCity(city_name: str, start_date: str = None, end_date: str = None):
-        """城市天气查询 - 根据城市名查询天气信息。支持武汉、北京、上海等主要城市。如果不提供日期，默认查询今天和明天的天气数据"""
-        logger.debug(f"调用城市天气查询工具: city_name={city_name}, start_date={start_date}, end_date={end_date}")
-        return weather_tools.getWeatherByCity(city_name, start_date, end_date)
+    # @mcp.tool()
+    # def getWeatherByCity(city_name: str, start_date: str = None, end_date: str = None):
+    #     """城市天气查询 - 根据城市名查询天气信息。支持武汉、北京、上海等主要城市。如果不提供日期，默认查询今天和明天的天气数据"""
+    #     logger.debug(f"调用城市天气查询工具: city_name={city_name}, start_date={start_date}, end_date={end_date}")
+    #     return weather_tools.getWeatherByCity(city_name, start_date, end_date)
 
     # Flight info query tool
     @mcp.tool()

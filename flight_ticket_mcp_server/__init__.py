@@ -36,7 +36,23 @@ def main():
     parser = argparse.ArgumentParser(
         description="航空机票MCP服务器 - 提供航班查询、机票预订和管理功能"
     )
-    parser.parse_args()
+    parser.add_argument(
+        "--mode",
+        dest="flight_mode",
+        default=None,
+        help="Flight search browser mode: headless | headed (aliases: gui, visible, nonheadless). Default: headed."
+    )
+    args, _ = parser.parse_known_args()
+
+    # Apply CLI override for flight search mode
+    if args.flight_mode:
+        mode = args.flight_mode.strip().lower().replace("-", "").replace("_", "")
+        if mode in ("headless", "hl"):
+            os.environ["FLIGHT_SEARCH_HEADLESS"] = "true"
+        elif mode in ("headed", "gui", "visible", "nonheadless", "nh"):
+            os.environ["FLIGHT_SEARCH_HEADLESS"] = "false"
+        else:
+            parser.error(f"Invalid --mode value: {args.flight_mode}")
     
     # 运行主程序
     run_main() 
