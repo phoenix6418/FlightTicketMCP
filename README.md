@@ -251,6 +251,13 @@ python flight_ticket_server.py
    
    # 开发配置
    MCP_DEBUG=false
+
+   # 航班搜索浏览器配置
+   FLIGHT_SEARCH_HEADLESS=true
+   FLIGHT_SEARCH_USER_AGENT=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36
+   FLIGHT_SEARCH_MAX_ENTRIES=20
+   FLIGHT_SEARCH_MAX_ROUNDS=2
+   FLIGHT_SEARCH_AUTO_PORT=true
    ```
 
 3. **配置说明**：
@@ -277,6 +284,11 @@ python flight_ticket_server.py
 | `LOG_MAX_SIZE` | 日志文件最大大小(MB) | `10` | 正整数 |
 | `LOG_BACKUP_COUNT` | 日志备份数量 | `5` | 正整数 |
 | `FASTMCP_LOG_LEVEL` | FastMCP日志级别 | `INFO` | `DEBUG`, `INFO`, `WARNING`, `ERROR` |
+| `FLIGHT_SEARCH_HEADLESS` | 航班搜索是否无头浏览器 | `true` | `true`, `false`, `1`, `0` |
+| `FLIGHT_SEARCH_USER_AGENT` | 航班搜索浏览器UA | 内置默认UA | 任意有效UA字符串 |
+| `FLIGHT_SEARCH_MAX_ENTRIES` | 航班最大采集数量 | `20` | 正整数，留空表示不限制 |
+| `FLIGHT_SEARCH_MAX_ROUNDS` | 最大滚动轮数 | `2` | 正整数 |
+| `FLIGHT_SEARCH_AUTO_PORT` | 是否自动选择浏览器调试端口 | `true` | `true`, `false`, `1`, `0` |
 
 ### 5. 启动验证
 

@@ -209,11 +209,12 @@ class FlightRouteSearcher:
         print("🔄 智能滚动加载航班内容...")
 
         try:
-            max_rounds = 5
+            max_rounds = self._get_max_rounds()
             stable_rounds = 3
             same_rounds = 0
             prev_count = 0
             prev_height = 0
+            max_entries = self._get_max_entries()
 
             scroll_js = """
                 return (function() {
@@ -296,6 +297,7 @@ class FlightRouteSearcher:
                 })();
             """
 
+            reached_max_round = True
             for i in range(1, max_rounds + 1):
                 # 尽量滚动到可滚动容器/页面底部，触发懒加载
                 try:
@@ -318,7 +320,7 @@ class FlightRouteSearcher:
                     except Exception:
                         print("   滚动目标: N/A")
 
-                time.sleep(2.5)  # 等待内容加载
+                time.sleep(2.0)  # 等待内容加载
 
                 # 等待可能的加载指示器消失
                 self._wait_for_loading_complete(timeout=6)
@@ -335,12 +337,18 @@ class FlightRouteSearcher:
                     current_height = 0
                 print(f"   当前页面航班元素数量：{current_count}")
 
-                new_in_round = self._collect_visible_flights()
+                # 如果已达上限，避免继续解析当前页面
+                if hasattr(self, "_scrolled_flights") and len(self._scrolled_flights) >= max_entries:
+                    print(f"   已收集到{max_entries}条航班，停止滚动")
+                    reached_max_round = False
+                    break
+
+                new_in_round = self._collect_visible_flights(max_entries=max_entries)
                 print(f"   本轮新增航班数量：{new_in_round}")
 
                 # 达到航班数量阈值则停止滚动
-                if hasattr(self, "_scrolled_flights") and len(self._scrolled_flights) >= 30:
-                    print("   已收集到30条航班，停止滚动")
+                if hasattr(self, "_scrolled_flights") and len(self._scrolled_flights) >= max_entries:
+                    print(f"   已收集到{max_entries}条航班，停止滚动")
                     break
 
                 if new_in_round == 0 and current_height == prev_height and current_count <= prev_count:
@@ -352,7 +360,12 @@ class FlightRouteSearcher:
 
                 if same_rounds >= stable_rounds:
                     print("   航班数量无增长，停止滚动")
+                    reached_max_round = False
                     break
+
+            if reached_max_round and max_entries is not None and hasattr(self, "_scrolled_flights"):
+                if len(self._scrolled_flights) < max_entries:
+                    print(f"   已达到最大滚动次数({max_rounds})，但航班数量未达到上限({len(self._scrolled_flights)}/{max_entries})")
 
             # 滚动回到顶部，确保能看到所有航班
             print("🔝 滚动回到页面顶部")
@@ -454,10 +467,14 @@ class FlightRouteSearcher:
         #     logger.warning(f"保存网络请求日志失败: {e}")
         return
 
-    def _collect_visible_flights(self) -> int:
+    def _collect_visible_flights(self, max_entries: Optional[int] = None) -> int:
         """收集当前可见航班，返回新增数量"""
         new_count = 0
         try:
+            if max_entries is not None and hasattr(self, "_scrolled_flights"):
+                if len(self._scrolled_flights) >= max_entries:
+                    return 0
+
             flight_elements = self.page.eles('css:.flight-list .flight-item', timeout=1)
             if not flight_elements:
                 flight_elements = self.page.eles('css:.flight-item', timeout=1)
@@ -473,6 +490,8 @@ class FlightRouteSearcher:
                         self._scrolled_flight_keys.add(flight_key)
                         self._scrolled_flights.append(flight_info)
                         new_count += 1
+                        if max_entries is not None and len(self._scrolled_flights) >= max_entries:
+                            return new_count
                 except Exception:
                     continue
         except Exception:
@@ -608,6 +627,15 @@ class FlightRouteSearcher:
         if hasattr(self, "_scrolled_flights") and self._scrolled_flights:
             flights.extend(self._scrolled_flights)
 
+        max_entries = self._get_max_entries()
+        if max_entries is not None and len(flights) > max_entries:
+            flights = flights[:max_entries]
+        if max_entries is not None and len(flights) >= max_entries:
+            for idx, item in enumerate(flights, 1):
+                item['序号'] = idx
+            logger.info(f"成功找到 {len(flights)} 个有航班号的航班")
+            return flights
+
         try:
             # 查找航班容器
             flight_list = self.page.ele('css:.body-wrapper')
@@ -630,6 +658,8 @@ class FlightRouteSearcher:
             for i, container in enumerate(flight_containers):
                 # if valid_flights_count >= 20:
                 #     break
+                if max_entries is not None and len(flights) >= max_entries:
+                    break
 
                 try:
                     flight_info = self._parse_flight_container(container, i + 1)
@@ -643,6 +673,8 @@ class FlightRouteSearcher:
                         flights.append(flight_info)
                         valid_flights_count += 1
                         logger.debug(f"成功解析航班 {valid_flights_count}: {flight_info.get('航班号')}")
+                        if max_entries is not None and len(flights) >= max_entries:
+                            break
                     else:
                         logger.debug(f"航班容器 {i+1} 无有效航班号，跳过")
 
@@ -703,6 +735,26 @@ class FlightRouteSearcher:
             """)
         except Exception:
             pass
+
+    def _get_max_entries(self) -> Optional[int]:
+        """获取航班最大条数限制（None表示不限制）"""
+        value = os.getenv("FLIGHT_SEARCH_MAX_ENTRIES", "20").strip()
+        if not value:
+            return None
+        try:
+            return int(value)
+        except ValueError:
+            return 20
+
+    def _get_max_rounds(self) -> int:
+        """获取最大滚动轮数"""
+        value = os.getenv("FLIGHT_SEARCH_MAX_ROUNDS", "2").strip()
+        if not value:
+            return 2
+        try:
+            return int(value)
+        except ValueError:
+            return 2
 
     def _parse_flight_container(self, container, index: int) -> Optional[Dict[str, Any]]:
         """
